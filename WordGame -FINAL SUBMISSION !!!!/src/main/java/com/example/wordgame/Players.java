@@ -64,4 +64,11 @@ public class Players {
         wins += amt;
     }
 
+    public void purchasePowerUp(PowerUps powerUp) {
+        if (powerUp != null && this.points >= powerUp.getCost()) {
+            this.inventory.add(powerUp);
+            this.addPoints(-powerUp.getCost());
+        }
+    }
+
 }

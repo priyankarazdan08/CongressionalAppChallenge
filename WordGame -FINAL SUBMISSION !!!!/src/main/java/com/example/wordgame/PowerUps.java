@@ -1,53 +1,45 @@
 package com.example.wordgame;
 
 public class PowerUps {
-    String name;
-    int cost;
-    int amtLeft = 2;
+    private String name;
+    private int cost;
+    private int amtLeft;
+
+    private static final int CREATE_RANDOM_WORD_COST = 30;
+    private static final int WORD_HINT_COST = 100;
+    private static final int WORD_REPEAT_IMMUNITY_COST = 40;
 
     public PowerUps(String name) {
         this.name = name;
-        if(name.equals("Create Random Word")) {
-            cost = 30;
-        }
-        if(name.equals("Word Hint")) {
-            cost = 100;
-        }
-        if(name.equals("Word Repeat Immunity")) {
-            cost = 40;
-        }
+        this.amtLeft = 2;
+        this.cost = determineCost(name);
     }
 
-    public PowerUps (String name, int amtLeft) {
+    public PowerUps(String name, int amtLeft) {
         this.name = name;
         this.amtLeft = amtLeft;
-        if(name.equals("Create Random Word")) {
-            cost = 100;
-        }
-        if(name.equals("Word Hint")) {
-            cost = 30;
-        }
-        if(name.equals("Word Repeat Immunity")) {
-            cost = 40;
+        this.cost = determineCost(name);
+    }
+
+    private int determineCost(String name) {
+        switch (name) {
+            case "Create Random Word":
+                return CREATE_RANDOM_WORD_COST;
+            case "Word Hint":
+                return WORD_HINT_COST;
+            case "Word Repeat Immunity":
+                return WORD_REPEAT_IMMUNITY_COST;
+            default:
+                return 0; // Default case if the name does not match
         }
     }
 
-    public String useAbility(String powerUpName) {
-        if(amtLeft > 0) {
-            if(powerUpName.equals("Create Random Word")) {
-                amtLeft -= 1;
-                return " created random word";
-            }
-            if(powerUpName.equals("Word Hint")) {
-                amtLeft -= 1;
-                return " used Word Hint";
-            }
-            if(powerUpName.equals("Word Repeat Immunity")) {
-                amtLeft -= 1;
-                return " used Word Repeat Immunity";
-            }
+    public String useAbility() {
+        if (amtLeft > 0) {
+            amtLeft--;
+            return name + " used. " + amtLeft + " left.";
         }
-        return "Cannot Use PowerUp. You Need to Buy More";
+        return "Cannot use " + name + ". You need to buy more.";
     }
 
     public void addMoreAbility(int amt) {
@@ -61,6 +53,7 @@ public class PowerUps {
     public int getCost() {
         return cost;
     }
+
     public int getAmtLeft() {
         return amtLeft;
     }

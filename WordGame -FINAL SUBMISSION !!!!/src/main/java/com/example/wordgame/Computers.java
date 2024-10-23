@@ -1,7 +1,5 @@
 package com.example.wordgame;
 
-import javafx.scene.control.ListView;
-
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -20,21 +18,30 @@ public class Computers {
         name = "Computer" + numOfComps;
         numOfTurns = 0;
         this.level = level;
-        if(level.equals("Hard")) {
-            inventory.add(new PowerUps("Word Repeat Immunity"));
-            inventory.get(0).addMoreAbility(1);
-        }
-        if(level.equals("Medium")) {
-            inventory.add(new PowerUps("Word Repeat Immunity"));
-        }
+        initializeInventory();
     }
+
     public Computers(String name, int numOfTurns, String level) {
         this.name = name;
-        System.out.println(name);
-        numOfComps = Integer.parseInt(name.substring(name.length()-1));
+        numOfComps = Integer.parseInt(name.substring(name.length() - 1));
         this.numOfTurns = numOfTurns;
         this.level = level;
     }
+
+    private void initializeInventory() {
+        if (level.equals("Hard")) {
+            addPowerUp("Word Repeat Immunity", 2);
+        } else if (level.equals("Medium")) {
+            addPowerUp("Word Repeat Immunity", 1);
+        }
+    }
+
+    private void addPowerUp(String powerUpName, int amount) {
+        PowerUps powerUp = new PowerUps(powerUpName);
+        powerUp.addMoreAbility(amount);
+        inventory.add(powerUp);
+    }
+
     public void loadInventory(String power, int amt) {
         inventory.add(new PowerUps(power, amt));
     }
@@ -43,72 +50,74 @@ public class Computers {
         numOfComps = 0;
     }
 
-
     public String getName() {
         return name;
     }
 
     public String getRandomWord() {
-        String tempWord = "";
-        try {
-            FileReader reader = new FileReader("src/main/resources/dictionary");
-            Scanner in = new Scanner(reader);
-            for(int i = 0; i < (int) (Math.random()*3235 + 1); i++) {
-                tempWord = in.nextLine();
+        try (Scanner in = new Scanner(new FileReader("src/main/resources/dictionary"))) {
+            for (int i = 0; i < (int) (Math.random() * 3235 + 1); i++) {
+                if (in.hasNext()) {
+                    in.nextLine();
+                }
             }
-            return tempWord;
-
-        } catch (FileNotFoundException x) {
+            return in.hasNext() ? in.nextLine() : "couldn't retrieve";
+        } catch (FileNotFoundException e) {
             return "couldn't retrieve";
         }
     }
 
     public String getWord(String previousWord, ArrayList<String> history, ArrayList<String> powerUpHistory) throws FileNotFoundException {
-        String tempWord = getRandomWord();
-        int chancesOfRandom = 0;
-        if(level.equals("Easy")) {
-            chancesOfRandom = (int) (Math.random()*6+1);
-        }
-        if(level.equals("Medium")) {
-            chancesOfRandom = (int) (Math.random()*10+1);
-        }
-        if(level.equals("Hard")) {
-            chancesOfRandom = (int) (Math.random()*15+1);
-        }
-        if(chancesOfRandom != 1) {
-            try {
-                FileReader reader = new FileReader("src/main/resources/dictionary");
-                Scanner in = new Scanner(reader);
-                while(!(previousWord.substring(previousWord.length()-1).equals(tempWord.substring(0, 1))) || history.contains(tempWord)) {
-                    for(int i = 0; i < (int) (Math.random()*3235 + 1); i++) {
-                        tempWord = in.nextLine();
-                    }
-                }
-                return tempWord;
-            } catch (NoSuchElementException x) {
-                for(PowerUps power: inventory) {
-                    if(power.getName().equals("Word Repeat Immunity") && power.getAmtLeft() > 0) {
-                        try {
-                            powerUpHistory.add(name + power.useAbility("Word Repeat Immunity"));
-                            FileReader reader = new FileReader("src/main/resources/dictionary");
-                            Scanner in = new Scanner(reader);
-                            while(!previousWord.substring(previousWord.length()-1).equals(tempWord.substring(0, 1))) {
-                                for(int i = 0; i < (int) (Math.random()*3235 + 1); i++) {
-                                    tempWord = in.nextLine();
-                                }
-                            }
-                        } catch (NoSuchElementException e) {
-                            System.out.println("Computer didn't know");
-                            return getRandomWord();
-                        }
-                    }
-                }
-            }
-        } else {
-            System.out.println("Computer didn't know");
+        int chancesOfRandom = calculateRandomChance();
+        String tempWord = chancesOfRandom != 1 ? findMatchingWord(previousWord, history) : null;
+
+        if (tempWord == null) {
+            useRepeatImmunityIfAvailable(previousWord, powerUpHistory);
             return getRandomWord();
         }
+
         return tempWord;
+    }
+
+    private int calculateRandomChance() {
+        switch (level) {
+            case "Easy":
+                return (int) (Math.random() * 6 + 1);
+            case "Medium":
+                return (int) (Math.random() * 10 + 1);
+            case "Hard":
+                return (int) (Math.random() * 15 + 1);
+            default:
+                return 1;
+        }
+    }
+
+    private String findMatchingWord(String previousWord, ArrayList<String> history) {
+        try (Scanner in = new Scanner(new FileReader("src/main/resources/dictionary"))) {
+            String tempWord;
+            while (in.hasNext()) {
+                tempWord = in.nextLine();
+                if (isValidWord(previousWord, tempWord, history)) {
+                    return tempWord;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("Dictionary not found.");
+        }
+        return null;
+    }
+
+    private boolean isValidWord(String previousWord, String word, ArrayList<String> history) {
+        return word.startsWith(previousWord.substring(previousWord.length() - 1)) && !history.contains(word);
+    }
+
+    private void useRepeatImmunityIfAvailable(String previousWord, ArrayList<String> powerUpHistory) {
+        for (PowerUps power : inventory) {
+            if (power.getName().equals("Word Repeat Immunity") && power.getAmtLeft() > 0) {
+                powerUpHistory.add(name + power.useAbility());
+                break;
+            }
+        }
     }
 
     public ArrayList<PowerUps> getInventory() {
@@ -126,6 +135,5 @@ public class Computers {
     public void addTurn() {
         numOfTurns += 1;
     }
-
-
 }
+

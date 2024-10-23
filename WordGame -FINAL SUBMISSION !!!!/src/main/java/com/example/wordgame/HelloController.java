@@ -778,7 +778,7 @@ public class HelloController {
                     wordRepeat = true;
 
                 }
-                powerUpHistory.add(connectNameToPlayer(turnOrder()).getName() + " " + p.useAbility(itemName));
+                powerUpHistory.add(connectNameToPlayer(turnOrder()).getName() + " " + p.useAbility());
                 connectNameToPlayer(turnOrder()).getInventory().remove(p);
                 inventoryLstView.getItems().clear();
                 for(PowerUps x: connectNameToPlayer(turnOrder()).getInventory()) {
